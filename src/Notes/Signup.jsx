@@ -1,21 +1,94 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
+// The useState Hook can be used to keep track of strings, numbers, booleans, arrays, objects, and any combination of these
 import styled from 'styled-components'
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from  'axios';
+import { signupRoute } from "../utils/APIRoutes";
 // import logo from './image/logo1.png'
 // import image from './diamond-heart@2x.png'
 // import signin from './Signin';
-function Signup() {
-        const handleSubmit =(event)=>{
-            event.preventDefault()
-            alert("form");
-        };
-        const handleChange =(e) =>{
-            e.preventDefault()
 
+function Signup() {
+        const navigate = useNavigate();
+        const [values, setValues] =useState({
+            username: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+        })
+        const toastOptions={
+            position: 'bottom-right',
+            autoClose: 8000,
+            pauseOnHover: true,
+            draggable : true,
+            theme:'white',
         }
+        useEffect(()=>{
+            if(localStorage.getItem('chat-user')){
+            navigate('/signin')
+            }
+        });
+        const handleSubmit =async(event)=>{
+            event.preventDefault()
+            // alert("WElLCOME");
+            // api calling 
+            if(handleValidation()){
+                console.log('in Validation' , signupRoute)
+                const{username , email , password} =values;
+                const{data} = await axios.post(signupRoute, {
+                    username,
+                    email,
+                    password,
+                   
+                });
+                if(data.status === false){
+                    toast.error(data.msg, toastOptions);
+                }
+                if(data.status === true){
+                    localStorage.setItem(
+                        'chat-user',
+                        JSON.stringify(data.user)
+                    );
+                    navigate('/signin');
+                }
+            
+            };
+        };
+        const handleValidation=()=>{
+            const{username , email , password , confirmPassword} =values;
+            if(password !== confirmPassword){
+                toast.error(
+                    'password not match' , toastOptions
+                );
+                return false;
+                
+            }else if(username.length<4){
+                toast.error(
+                    "Username should be greater than 4 words", toastOptions
+                )
+            }else if(password.length<4){
+                toast.error(
+                    "Password should be greater than 4 letter", toastOptions
+                )
+                return false;
+            }else if(email===""){
+                toast.error(
+                    "Email required"
+                )
+                return false;
+            }
+            return true;
+        }
+        const handleChange =(event) =>{
+            setValues({...values, [event.target.name]: event.target.value})
+        }
+
         return(
             <>
             <FormContainer>
+            <ToastContainer />
                 <form onSubmit={(event) => handleSubmit(event)} >
                     <div className="Main">
                         <img src="./diamond-heart@2x.png" alt="diamond img" />
@@ -25,7 +98,7 @@ function Signup() {
                     <input type="text" placeholder="Username" name="username" onChange={(e)=>handleChange(e)} />
                     <input type="email" placeholder="Your email" name="email" onChange={(e)=>handleChange(e)} />
                     <input type="password" placeholder="Password" name="password" onChange={(e)=>handleChange(e)} />
-                    <input type="confirmPassword" placeholder="ConfirmPassword" name="confirmPassword" onChange={(e)=>handleChange(e)} />
+                    <input type="password" placeholder="confirmPassword" name="confirmPassword" onChange={(e)=>handleChange(e)} />
                     <button type="submit" >Join us</button>
                     <span>Already Join us ?<Link to='/Signin'>Signin</Link> </span>
                      
